@@ -1,8 +1,14 @@
-group 'unportant.gist'
-version '1.0-SNAPSHOT'
+plugins {
+    id 'me.champeau.gradle.jmh' version '0.2.0'
+}
 
 apply plugin: 'java'
 apply plugin: 'groovy'
+apply plugin: 'me.champeau.gradle.jmh'
+apply plugin: 'idea'
+
+group 'unportant.gist'
+version '1.0-SNAPSHOT'
 
 compileJava {
     sourceCompatibility = '1.8'
@@ -16,3 +22,8 @@ dependencies {
     testCompile "org.codehaus.groovy:groovy-all:2.4.1"
     testCompile "org.spockframework:spock-core:1.0-groovy-2.4"
 }
+
+jmh {
+    jmhVersion = "1.9.3"
+}
+
