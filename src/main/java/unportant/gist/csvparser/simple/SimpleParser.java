@@ -25,7 +25,7 @@ public class SimpleParser implements Parser {
   public List<String> parse(String line) {
     reader.reset(line);
 
-    List<String> fields = new ArrayList<String>(expectedFieldCount);
+    List<String> fields = new ArrayList<>(expectedFieldCount);
 
     while (true) {
       token = readToken();
@@ -46,7 +46,7 @@ public class SimpleParser implements Parser {
 
   private ReusableToken readToken() {
     if (reader.isExhausted()) {
-      if (isFieldSeparator(reader.lastChar())) {
+      if (isFieldSeparator(reader.current())) {
         token.reset(Type.LAST_FIELD);
       } else {
         token.reset(Type.EOF);
@@ -91,12 +91,12 @@ public class SimpleParser implements Parser {
       char c = reader.read();
       if (isQuote(c)) {
         if (reader.isExhausted()) {
-          break;
+          return token;
         }
 
         char n = reader.read();
         if (isFieldSeparator(n)) {
-          break;
+          return token;
         } else if (isQuote(n)) {
           token.appendContent(quote);
         } else {
@@ -107,7 +107,7 @@ public class SimpleParser implements Parser {
       }
     }
 
-    if (reader.lastChar() != quote) {
+    if (reader.current() != quote) {
       throw new IllegalStateException();
     }
 
@@ -121,5 +121,4 @@ public class SimpleParser implements Parser {
   private boolean isFieldSeparator(char c) {
     return c == fieldSeparator;
   }
-
 }

@@ -3,13 +3,14 @@ package unportant.gist.csvparser.simple;
 final class ReusableReader {
 
   private String line;
-  private int pos;
+  private int nextPos;
 
   private char lastChar;
+  private char currentChar;
 
   void reset(String line) {
     this.line = line;
-    this.pos = 0;
+    this.nextPos = 0;
   }
 
   char lastChar() {
@@ -17,16 +18,21 @@ final class ReusableReader {
   }
 
   char peek(){
-    return line.charAt(pos);
+    return line.charAt(nextPos);
+  }
+
+  char current() {
+    return currentChar;
   }
 
   char read() {
-    lastChar = line.charAt(pos);
-    pos += 1;
-    return lastChar;
+    lastChar = currentChar;
+    currentChar = line.charAt(nextPos);
+    nextPos += 1;
+    return currentChar;
   }
 
   boolean isExhausted() {
-    return pos == line.length();
+    return nextPos == line.length();
   }
 }

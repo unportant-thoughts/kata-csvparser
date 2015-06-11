@@ -16,22 +16,26 @@ public class FsmParser implements Parser {
 
   private final char fieldSeparator;
   private final char quote;
+  private final int expectedFieldCount;
 
-  // Instances reused across call to avoid allocations
-
+  // Theses two are reused to avoid useless garbage
   private final ReusableReader reader = new ReusableReader();
   private final StringBuilder currentField = new StringBuilder();
-  private final List<String> fields = new ArrayList<String>();
-  private State state;
 
-  public FsmParser(char fieldSeparator, char quote) {
+  private State state;
+  private List<String> fields;
+
+  public FsmParser(char fieldSeparator, char quote, int expectedFieldCount) {
     this.fieldSeparator = fieldSeparator;
     this.quote = quote;
+    this.expectedFieldCount = expectedFieldCount;
   }
 
   public List<String> parse(String line) {
-    fields.clear();
     reader.reset(line);
+    currentField.setLength(0);
+
+    fields =new ArrayList<>(expectedFieldCount);
     state = State.READY;
 
     while (!reader.isExhausted()) {
@@ -55,7 +59,7 @@ public class FsmParser implements Parser {
       case READY:
       case SIMPLE_FIELD:
       case END_OF_QUOTED_OR_ESCAPED_QUOTE:
-        fields.add(currentField.toString());
+        addField();
         break;
       case QUOTED_FIELD:
         throw new IllegalStateException();
@@ -64,17 +68,15 @@ public class FsmParser implements Parser {
     return fields;
   }
 
-
   private void ready() {
     char c = reader.read();
     if (isQuote(c)) {
       state = State.QUOTED_FIELD;
     } else if (isFieldSeparator(c)) {
-      fields.add(currentField.toString());
-      currentField.setLength(0);
+      addField();
       state = State.READY;
     } else {
-      currentField.append(c);
+      append(c);
       state = State.SIMPLE_FIELD;
     }
   }
@@ -82,11 +84,10 @@ public class FsmParser implements Parser {
   private void simpleField() {
     char c = reader.read();
     if (isFieldSeparator(c)) {
-      fields.add(currentField.toString());
-      currentField.setLength(0);
+      addField();
       state = State.READY;
     } else {
-      currentField.append(c);
+      append(c);
     }
   }
 
@@ -95,24 +96,31 @@ public class FsmParser implements Parser {
     if (isQuote(c)) {
       state = State.END_OF_QUOTED_OR_ESCAPED_QUOTE;
     } else {
-      currentField.append(c);
+      append(c);
     }
   }
 
   private void endOfQuotedOrEscapedQuote() {
     char c = reader.read();
     if (isQuote(c)) {
-      currentField.append(quote);
+      append(quote);
       state = State.QUOTED_FIELD;
     } else if (isFieldSeparator(c)) {
-      fields.add(currentField.toString());
-      currentField.setLength(0);
+      addField();
       state = State.READY;
     } else {
       throw new IllegalStateException();
     }
   }
 
+  private void addField() {
+    fields.add(currentField.toString());
+    currentField.setLength(0);
+  }
+
+  private void append(char c) {
+    currentField.append(c);
+  }
 
   private boolean isQuote(char c) {
     return c == quote;
